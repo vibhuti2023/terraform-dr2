@@ -42,7 +42,7 @@ resource "aws_security_group" "dr_sg" {
 
 # Launch EC2 instance hosting the website
 resource "aws_instance" "primary_server" {
-  ami           = "ami-001286816938a120d"  # Replace with a valid AMI ID
+  ami           = "ami-00f747470ff841d9f"  # Replace with a valid AMI ID
   instance_type = "t2.micro"       # Cost-effective instance type
   key_name      = "Key-pair"
   security_groups = [aws_security_group.dr_sg.name]
@@ -61,28 +61,36 @@ resource "aws_instance" "primary_server" {
 }
 
 # Auto Scaling Group & Launch Configuration
-resource "aws_launch_configuration" "dr_lc" {
-  name          = "dr-launch-config"
-  image_id      = "ami-001286816938a120d"  # Same AMI as primary server
+resource "aws_launch_template" "dr_lt" {
+  name_prefix   = "dr-launch-template"
+  image_id      = "ami-00f747470ff841d9f"  # Replace with a valid AMI
   instance_type = "t2.micro"
   key_name      = "Key-pair"
-  security_groups = [aws_security_group.dr_sg.id]
 
-  user_data = <<-EOF
+  network_interfaces {
+    security_groups = [aws_security_group.dr_sg.id]
+  }
+
+  user_data = base64encode(<<-EOF
               #!/bin/bash
               echo "hellothere" > /var/www/html/index.html
               sudo yum install -y httpd
               sudo systemctl start httpd
               sudo systemctl enable httpd
               EOF
+              )
 }
 
 resource "aws_autoscaling_group" "dr_asg" {
-  launch_configuration = aws_launch_configuration.dr_lc.id
-  min_size             = 1
-  max_size             = 2
   desired_capacity     = 1
-  vpc_zone_identifier  = ["subnet-01f8cbdefe7a74010"]  # Replace with valid subnet
+  max_size             = 2
+  min_size             = 1
+  vpc_zone_identifier  = ["subnet-01f8cbdefe7a74010"]
+
+  launch_template {
+    id      = aws_launch_template.dr_lt.id
+    version = "$Latest"
+  }
 
   tag {
     key                 = "Name"
@@ -90,6 +98,7 @@ resource "aws_autoscaling_group" "dr_asg" {
     propagate_at_launch = true
   }
 }
+
 
 # CloudWatch Alarm for failure detection
 resource "aws_cloudwatch_metric_alarm" "instance_down" {
