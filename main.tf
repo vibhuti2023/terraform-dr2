@@ -101,20 +101,26 @@ resource "aws_autoscaling_group" "dr_asg" {
 
 
 # CloudWatch Alarm for failure detection
+resource "aws_sns_topic" "alarm_notifications" {
+  name = "dr-instance-failure"
+}
+
 resource "aws_cloudwatch_metric_alarm" "instance_down" {
   alarm_name          = "instance-down-alarm"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = "1"
-  metric_name        = "StatusCheckFailed_Instance"
-  namespace          = "AWS/EC2"
-  period            = "300"
-  statistic        = "Average"
-  threshold       = "1"
-  alarm_actions  = [aws_autoscaling_group.dr_asg.arn]
+  metric_name         = "GroupInServiceInstances"
+  namespace           = "AWS/AutoScaling"
+  period              = "300"
+  statistic           = "Average"
+  threshold           = "1"
+  alarm_actions       = [aws_sns_topic.alarm_notifications.arn]  # FIX: Use SNS topic instead of ASG ARN
+
   dimensions = {
-    InstanceId = aws_instance.primary_server.id
+    AutoScalingGroupName = aws_autoscaling_group.dr_asg.name
   }
 }
+
 
 # S3 bucket for storing snapshots (optional)
 resource "aws_s3_bucket" "dr_snapshots" {
