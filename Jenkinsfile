@@ -13,7 +13,17 @@ pipeline {
                 git branch: 'main', url: 'https://github.com/vibhuti2023/terraform-dr2.git'
             }
         }
-
+    stage('Inject SSH Key') {
+            steps {
+                withCredentials([string(credentialsId: 'SSH_PUBLIC_KEY', variable: 'SSH_KEY')]) {
+                    sh '''
+                    mkdir -p ~/.ssh
+                    echo "$SSH_KEY" > ~/.ssh/id_rsa.pub
+                    chmod 600 ~/.ssh/id_rsa.pub
+                    '''
+                }
+            }
+        }
         stage('Initialize Terraform') {
             steps {
                 sh '''
