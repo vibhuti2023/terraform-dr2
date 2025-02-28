@@ -105,12 +105,18 @@ resource "aws_cloudwatch_metric_alarm" "instance_down" {
 # S3 bucket for storing snapshots (optional)
 resource "aws_s3_bucket" "dr_snapshots" {
   bucket = "dr-snapshots-bucket"
-  acl    = "private"
-  lifecycle_rule {
-    id      = "delete-old-snapshots"
-    enabled = true
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "dr_snapshots_lifecycle" {
+  bucket = aws_s3_bucket.dr_snapshots.id
+
+  rule {
+    id     = "delete_old_backups"
+    status = "Enabled"
+
     expiration {
-      days = 7  # Delete snapshots older than 7 days
+      days = 7
     }
   }
 }
+
