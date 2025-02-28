@@ -4,9 +4,14 @@ provider "aws" {
 
 # Generate a key pair for SSH access
 resource "aws_key_pair" "Key-pair" {
-  key_name   = "Key-pair"
-  public_key = file("~/.ssh/id_rsa.pub")  # Ensure you have an SSH key generated
+  key_name   = "Key-pair-${random_id.ssh_key.hex}"  # Unique name
+  public_key = file("~/.ssh/id_rsa.pub")
 }
+
+resource "random_id" "ssh_key" {
+  byte_length = 4
+}
+
 
 # Security group for EC2 instance
 resource "aws_security_group" "dr_sg" {
