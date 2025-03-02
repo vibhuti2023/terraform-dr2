@@ -140,6 +140,17 @@ resource "aws_s3_bucket_lifecycle_configuration" "dr_snapshots_lifecycle" {
   }
 }
 output "primary_instance_id" {
-  value = aws_instance.primary_server.id
+  description = "ID of the primary EC2 instance"
+  value       = aws_instance.primary_server.id
+}
+
+output "primary_instance_public_ip" {
+  description = "Public IP of the primary EC2 instance"
+  value       = aws_instance.primary_server.public_ip
+}
+
+output "backup_ami_id" {
+  description = "Latest backup AMI ID"
+  value       = aws_ami.backup_ami.id
 }
 
