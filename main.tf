@@ -139,4 +139,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "dr_snapshots_lifecycle" {
     }
   }
 }
+output "primary_instance_id" {
+  value = aws_instance.primary_server.id
+}
 
